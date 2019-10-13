@@ -1,0 +1,56 @@
+service: predict-service
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+provider:
+  name: aws
+  runtime: python3.7
+  region: us-west-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:GetObjectAcl
+      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+
+functions:
+  predict-brand:
+    handler: src/model/predict.handler
+    layers:
+      - {Ref: PythonRequirementsLambdaLayer}
+    package:
+      include: 
+        - src/model/predict.py
+        - src/model/util.py
+
+#Exclude the files in funtions
+package:
+  individually: true
+  exclude:
+    - ./**
+
+# AWS Lambda Layers using pythonRequirements plugin
+custom:
+  bucket: ${env:BUCKET_NAME}
+  dotenv:
+    include:
+      - BUCKET_NAME
+      - MODEL_FILE_NAME
+  pythonRequirements:
+    slim: true
+    useDownloadCache: true
+    useStaticCache: true
+    dockerizePip: true
+    layer:
+      name: ${self:provider.stage}-python37
+      description: Python Requirements for prediction
+      compatibleRuntimes:
+        - python3.7
+    noDeploy:
+      - python-dotenv
+      - psycopg2-binary
+      - pandas
+      - docutils
+      - pytz
+

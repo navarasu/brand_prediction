@@ -1,0 +1,10 @@
+venv
+.vscode
+node_modules
+.serverless
+package-lock.json
+package.json
+*.dat
+.DS_Store
+__pycache__
+.env
